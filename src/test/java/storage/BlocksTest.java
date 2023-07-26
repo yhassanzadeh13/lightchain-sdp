@@ -55,7 +55,7 @@ public class BlocksTest {
    */
   @AfterEach
   void cleanup() throws IOException {
-    db.closeDb();
+    db.close();
     FileUtils.deleteDirectory(new File(tempdir.toString()));
   }
 

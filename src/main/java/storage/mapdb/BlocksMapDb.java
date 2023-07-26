@@ -162,7 +162,7 @@ public class BlocksMapDb implements Blocks {
   /**
    * Close the db.
    */
-  public void closeDb() {
+  public void close() {
     dbId.close();
     dbHeight.close();
   }

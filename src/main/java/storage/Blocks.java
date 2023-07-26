@@ -57,4 +57,9 @@ public interface Blocks {
    * @return all stored blocks in database.
    */
   ArrayList<Block> all();
+
+  /**
+   * Closes the database.
+   */
+  void close();
 }
