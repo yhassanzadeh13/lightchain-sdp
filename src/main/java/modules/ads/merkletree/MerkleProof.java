@@ -1,53 +1,53 @@
 package modules.ads.merkletree;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Objects;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import model.crypto.Sha3256Hash;
 import modules.ads.MembershipProof;
 
 /**
  * A proof of membership in a Merkle tree.
  */
-public class MerkleProof implements MembershipProof, Serializable {
-  private final ArrayList<Boolean> isLeftNode;
+public class MerkleProof implements MembershipProof {
+  private final MerklePath merklePath;
   private final Sha3256Hash root;
-  private ArrayList<Sha3256Hash> path;
 
   /**
    * Constructs a proof from a list of hashes and a root.
    *
-   * @param path       the list of hashes
    * @param root       the root
-   * @param isLeftNode the list of isLeft Boolean values of the hashes
+   * @param merklePath the merkle path of the proof and their isLeft booleans
    */
-  public MerkleProof(ArrayList<Sha3256Hash> path, Sha3256Hash root, ArrayList<Boolean> isLeftNode) {
-    this.path = new ArrayList<>(path);
+  public MerkleProof(Sha3256Hash root, MerklePath merklePath) {
     this.root = root;
-    this.isLeftNode = new ArrayList<>(isLeftNode);
+    this.merklePath = new MerklePath(merklePath);
   }
 
-  @Override
-  public ArrayList<Sha3256Hash> getPath() {
-    return new ArrayList<>(path);
-  }
-
-  public void setPath(ArrayList<Sha3256Hash> path) {
-    this.path = new ArrayList<>(path);
-  }
-
-  @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "internal representation is intentionally returned")
-  public ArrayList<Boolean> getIsLeftNode() {
-    return isLeftNode;
-  }
-
+  /**
+   * Return the root of the Merkle tree.
+   *
+   * @return the root of the Merkle tree.
+   */
   public Sha3256Hash getRoot() {
     return root;
   }
 
+  /**
+   * Returns the merkle path of the proof of membership.
+   *
+   * @return merkle path of the proof of membership.
+   */
+  @Override
+  public MerklePath getMerklePath() {
+    return new MerklePath(merklePath);
+  }
+
+  /**
+   * Checks if two MerkleProofs are equal.
+   *
+   * @param o the other MerkleProof
+   * @return true if the MerkleProofs are equal, false otherwise
+   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -56,17 +56,17 @@ public class MerkleProof implements MembershipProof, Serializable {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    MerkleProof proof = (MerkleProof) o;
-    for (int i = 0; i < path.size(); i++) {
-      if (!Arrays.equals(path.get(i).getBytes(), proof.path.get(i).getBytes())) {
-        return false;
-      }
-    }
-    return root.equals(proof.root);
+    MerkleProof that = (MerkleProof) o;
+    return merklePath.equals(that.merklePath) && root.equals(that.root);
   }
 
+  /**
+   * Returns the hash code of the MerkleProof.
+   *
+   * @return the hash code of the MerkleProof.
+   */
   @Override
   public int hashCode() {
-    return Objects.hash(path, root);
+    return Objects.hash(merklePath, root);
   }
 }

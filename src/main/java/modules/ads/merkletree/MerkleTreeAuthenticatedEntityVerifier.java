@@ -17,14 +17,16 @@ public class MerkleTreeAuthenticatedEntityVerifier implements modules.ads.Authen
    * Verifies the AuthenticatedEntity against its self-contained proof.
    *
    * @param authenticatedEntity the AuthenticatedEntity to verify.
+   *
    * @return true if entity contains a valid Merkle Proof against its root identifier, false otherwise.
    */
   @Override
   public boolean verify(AuthenticatedEntity authenticatedEntity) {
     Sha3256Hasher hasher = new Sha3256Hasher();
     MembershipProof proof = authenticatedEntity.getMembershipProof();
-    ArrayList<Boolean> isLeftNode = proof.getIsLeftNode();
-    ArrayList<Sha3256Hash> proofPath = proof.getPath();
+    MerklePath path = proof.getMerklePath();
+    ArrayList<Boolean> isLeftNode = path.getIsLeftNode();
+    ArrayList<Sha3256Hash> proofPath = path.getPath();
 
     Sha3256Hash initialHash = hasher.computeHash(authenticatedEntity.getEntity().id());
     Sha3256Hash currentHash;

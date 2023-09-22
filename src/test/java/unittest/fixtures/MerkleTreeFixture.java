@@ -7,7 +7,7 @@ import modules.ads.merkletree.MerkleTree;
  */
 public class MerkleTreeFixture {
   /**
-   * Creates a new skip list with n random elements.
+   * Creates a new merkle tree with n random elements.
    *
    * @param n number of elements to create
    * @return a new merkle tree with n random elements.

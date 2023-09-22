@@ -58,7 +58,7 @@ public class Sha3256Hasher implements Hasher {
   }
 
   /**
-   * Commutative hashing of two given byte arrays.
+   * Hashing of two given byte arrays.
    *
    * @param b1 first byte array.
    * @param b2 second byte array.
@@ -73,6 +73,13 @@ public class Sha3256Hasher implements Hasher {
     }
   }
 
+  /**
+   * Hashing of two SHA3-256 hash objects.
+   *
+   * @param h1 first SHA3-256 hash object.
+   * @param h2 second SHA3-256 hash object.
+   * @return SHA3-256 hash object of the concatenation of the two SHA3-256 hash objects.
+   */
   public Sha3256Hash computeHash(Sha3256Hash h1, Sha3256Hash h2) {
     return computeHash(h1.getBytes(), h2.getBytes());
   }

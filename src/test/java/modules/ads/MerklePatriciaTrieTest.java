@@ -8,31 +8,35 @@ import java.util.concurrent.atomic.AtomicInteger;
 import model.Entity;
 import model.crypto.Sha3256Hash;
 import model.lightchain.Identifier;
-import modules.ads.merkletree.*;
+import modules.ads.merkletree.MerklePath;
+import modules.ads.merkletree.MerkleProof;
+import modules.ads.merkletree.MerkleTreeAuthenticatedEntity;
+import modules.ads.merkletree.MerkleTreeAuthenticatedEntityVerifier;
+import modules.ads.mtrie.MerklePatriciaTrie;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import unittest.fixtures.EntityFixture;
-import unittest.fixtures.MerkleTreeFixture;
+import unittest.fixtures.MerklePatriciaTrieFixture;
 import unittest.fixtures.Sha3256HashFixture;
 
 /**
- * Encapsulates tests for an authenticated and concurrent implementation of MerkleTree ADS.
+ * Encapsulates tests for an authenticated and concurrent implementation of MerklePatriciaTree ADS.
  */
-public class MerkleTreeTest {
+public class MerklePatriciaTrieTest {
 
   /**
    * A basic test for one sequential put and get operations.
    */
   @Test
   public void testVerification() {
-    MerkleTree merkleTree = MerkleTreeFixture.createMerkleTree(5);
-    Assertions.assertEquals(merkleTree.size(), 5); // fixture sanity check.
+    MerklePatriciaTrie merklePatriciaTrie = MerklePatriciaTrieFixture.createMerklePatriciaTree(5);
+    Assertions.assertEquals(merklePatriciaTrie.size(), 5); // fixture sanity check.
 
     Entity entity = new EntityFixture();
-    merkleTree.put(entity);
-    Assertions.assertEquals(merkleTree.size(), 6);
+    merklePatriciaTrie.put(entity);
+    Assertions.assertEquals(merklePatriciaTrie.size(), 6);
 
-    AuthenticatedEntity authenticatedEntity = merkleTree.get(entity.id());
+    AuthenticatedEntity authenticatedEntity = merklePatriciaTrie.get(entity.id());
     MerkleTreeAuthenticatedEntityVerifier verifier = new MerkleTreeAuthenticatedEntityVerifier();
     Assertions.assertTrue(verifier.verify(authenticatedEntity));
   }
@@ -43,23 +47,23 @@ public class MerkleTreeTest {
    */
   @Test
   public void testPutGetSameProof() {
-    MerkleTree merkleTree = MerkleTreeFixture.createMerkleTree(5);
-    Assertions.assertEquals(merkleTree.size(), 5); // fixture sanity check.
+    MerklePatriciaTrie merklePatriciaTrie = MerklePatriciaTrieFixture.createMerklePatriciaTree(5);
+    Assertions.assertEquals(merklePatriciaTrie.size(), 5); // fixture sanity check.
     Entity e1 = new EntityFixture();
 
     // putting e1
-    AuthenticatedEntity authenticatedEntityPut = merkleTree.put(e1);
+    AuthenticatedEntity authenticatedEntityPut = merklePatriciaTrie.put(e1);
     MembershipProof proofPutE1 = authenticatedEntityPut.getMembershipProof();
-    Assertions.assertEquals(merkleTree.size(), 6);
+    Assertions.assertEquals(merklePatriciaTrie.size(), 6);
 
     // getting e1
-    AuthenticatedEntity authE1Get = merkleTree.get(e1.id());
+    AuthenticatedEntity authE1Get = merklePatriciaTrie.get(e1.id());
     MembershipProof proofGetE1 = authE1Get.getMembershipProof();
 
     // putting e2
     Entity e2 = new EntityFixture();
-    AuthenticatedEntity authE2Put = merkleTree.put(e2);
-    Assertions.assertEquals(merkleTree.size(), 7);
+    AuthenticatedEntity authE2Put = merklePatriciaTrie.put(e2);
+    Assertions.assertEquals(merklePatriciaTrie.size(), 7);
 
     // getting e2
     MembershipProof proofPutE2 = authE2Put.getMembershipProof();
@@ -76,22 +80,22 @@ public class MerkleTreeTest {
    */
   @Test
   public void testPutExistingEntity() {
-    MerkleTree merkleTree = MerkleTreeFixture.createMerkleTree(5);
-    Assertions.assertEquals(merkleTree.size(), 5); // fixture sanity check.
+    MerklePatriciaTrie merklePatriciaTrie = MerklePatriciaTrieFixture.createMerklePatriciaTree(5);
+    Assertions.assertEquals(merklePatriciaTrie.size(), 5); // fixture sanity check.
     Entity entity = new EntityFixture();
 
     // first time put
-    AuthenticatedEntity authenticatedEntityPut = merkleTree.put(entity);
+    AuthenticatedEntity authenticatedEntityPut = merklePatriciaTrie.put(entity);
     MembershipProof proofPut = authenticatedEntityPut.getMembershipProof();
-    Assertions.assertEquals(merkleTree.size(), 6);
+    Assertions.assertEquals(merklePatriciaTrie.size(), 6);
 
     // second attempt
-    AuthenticatedEntity authenticatedEntityPutAgain = merkleTree.put(entity);
+    AuthenticatedEntity authenticatedEntityPutAgain = merklePatriciaTrie.put(entity);
     MembershipProof proofPutAgain = authenticatedEntityPutAgain.getMembershipProof();
 
     // proofs must be equal.
     Assertions.assertEquals(proofPut, proofPutAgain);
-    Assertions.assertEquals(merkleTree.size(), 6); // duplicate entity should not change the size.
+    Assertions.assertEquals(merklePatriciaTrie.size(), 6); // duplicate entity should not change the size.
   }
 
   /**
@@ -110,8 +114,8 @@ public class MerkleTreeTest {
     Thread[] putThreads = new Thread[concurrencyDegree];
     Thread[] getThreads = new Thread[concurrencyDegree];
 
-    MerkleTree merkleTree = MerkleTreeFixture.createMerkleTree(0);
-    Assertions.assertEquals(merkleTree.size(), 0); // fixture sanity check.
+    MerklePatriciaTrie merklePatriciaTrie = MerklePatriciaTrieFixture.createMerklePatriciaTree(0);
+    Assertions.assertEquals(merklePatriciaTrie.size(), 0); // fixture sanity check.
 
     for (int i = 0; i < concurrencyDegree; i++) {
       Entity entity = new EntityFixture();
@@ -124,7 +128,7 @@ public class MerkleTreeTest {
       Entity entity = entities.get(i);
       putThreads[i] = new Thread(() -> {
         try {
-          merkleTree.put(entity);
+          merklePatriciaTrie.put(entity);
           putDone.countDown();
         } catch (Exception e) {
           threadError.getAndIncrement();
@@ -146,7 +150,7 @@ public class MerkleTreeTest {
       Identifier id = ids.get(i);
       getThreads[i] = new Thread(() -> {
         try {
-          AuthenticatedEntity authenticatedEntity = merkleTree.get(id);
+          AuthenticatedEntity authenticatedEntity = merklePatriciaTrie.get(id);
           MerkleTreeAuthenticatedEntityVerifier verifier = new MerkleTreeAuthenticatedEntityVerifier();
           if (!verifier.verify(authenticatedEntity)) {
             threadError.getAndIncrement();
@@ -167,20 +171,20 @@ public class MerkleTreeTest {
       Assertions.fail();
     }
     Assertions.assertEquals(0, threadError.get());
-    Assertions.assertEquals(concurrencyDegree, merkleTree.size());
+    Assertions.assertEquals(concurrencyDegree, merklePatriciaTrie.size());
   }
 
   /**
-   * Tests getting an entity that does not exist in the merkle tree throws IllegalArgumentException.
+   * Tests getting an entity that does not exist in the merkle patricia trie throws IllegalArgumentException.
    */
   @Test
   public void testGetNonExistingEntity() {
-    MerkleTree merkleTree = MerkleTreeFixture.createMerkleTree(5);
-    Assertions.assertEquals(merkleTree.size(), 5); // fixture sanity check.
+    MerklePatriciaTrie merklePatriciaTrie = MerklePatriciaTrieFixture.createMerklePatriciaTree(5);
+    Assertions.assertEquals(merklePatriciaTrie.size(), 5); // fixture sanity check.
     Entity entity = new EntityFixture();
 
     Assertions.assertThrows(IllegalArgumentException.class, () -> {
-      merkleTree.get(entity.id());
+      merklePatriciaTrie.get(entity.id());
     });
   }
 
@@ -189,10 +193,10 @@ public class MerkleTreeTest {
    */
   @Test
   public void testNullInsertion() {
-    MerkleTree merkleTree = MerkleTreeFixture.createMerkleTree(5);
-    Assertions.assertEquals(merkleTree.size(), 5); // fixture sanity check.
+    MerklePatriciaTrie merklePatriciaTrie = MerklePatriciaTrieFixture.createMerklePatriciaTree(5);
+    Assertions.assertEquals(merklePatriciaTrie.size(), 5); // fixture sanity check.
     Assertions.assertThrows(IllegalArgumentException.class, () -> {
-      merkleTree.put(null);
+      merklePatriciaTrie.put(null);
     });
   }
 
@@ -201,18 +205,18 @@ public class MerkleTreeTest {
    */
   @Test
   public void testManipulatedRoot() {
-    MerkleTree merkleTree = MerkleTreeFixture.createMerkleTree(5);
-    Assertions.assertEquals(merkleTree.size(), 5); // fixture sanity check.
+    MerklePatriciaTrie merklePatriciaTrie = MerklePatriciaTrieFixture.createMerklePatriciaTree(5);
+    Assertions.assertEquals(merklePatriciaTrie.size(), 5); // fixture sanity check.
     Entity entity = new EntityFixture();
-    AuthenticatedEntity authenticatedEntity = merkleTree.put(entity);
+    AuthenticatedEntity authenticatedEntity = merklePatriciaTrie.put(entity);
     MembershipProof proof = authenticatedEntity.getMembershipProof();
 
     // creates a tampered proof with random root.
     MerkleProof tamperedProof = new MerkleProof(new Sha3256Hash(new byte[32]), proof.getMerklePath());
     AuthenticatedEntity tamperedAuthenticatedEntity = new MerkleTreeAuthenticatedEntity(
-        tamperedProof,
-        authenticatedEntity.type(),
-        authenticatedEntity.getEntity());
+            tamperedProof,
+            authenticatedEntity.type(),
+            authenticatedEntity.getEntity());
 
     MerkleTreeAuthenticatedEntityVerifier verifier = new MerkleTreeAuthenticatedEntityVerifier();
     // authenticated entity must be verified.
@@ -226,15 +230,15 @@ public class MerkleTreeTest {
    */
   @Test
   public void testManipulatedEntity() {
-    MerkleTree merkleTree = MerkleTreeFixture.createMerkleTree(5);
-    Assertions.assertEquals(merkleTree.size(), 5); // fixture sanity check.
+    MerklePatriciaTrie merklePatriciaTrie = MerklePatriciaTrieFixture.createMerklePatriciaTree(5);
+    Assertions.assertEquals(merklePatriciaTrie.size(), 5); // fixture sanity check.
     Entity entity = new EntityFixture();
-    AuthenticatedEntity authenticatedEntity = merkleTree.put(entity);
+    AuthenticatedEntity authenticatedEntity = merklePatriciaTrie.put(entity);
 
     AuthenticatedEntity tamperedEntity = new MerkleTreeAuthenticatedEntity(
-        (MerkleProof) authenticatedEntity.getMembershipProof(),
-        authenticatedEntity.type(),
-        new EntityFixture());
+            (MerkleProof) authenticatedEntity.getMembershipProof(),
+            authenticatedEntity.type(),
+            new EntityFixture());
 
     MerkleTreeAuthenticatedEntityVerifier verifier = new MerkleTreeAuthenticatedEntityVerifier();
     Assertions.assertTrue(verifier.verify(authenticatedEntity)); // original authenticated entity passes verification.
@@ -246,11 +250,11 @@ public class MerkleTreeTest {
    */
   @Test
   public void testManipulatedProof() {
-    MerkleTree merkleTree = MerkleTreeFixture.createMerkleTree(5);
-    Assertions.assertEquals(merkleTree.size(), 5); // fixture sanity check.
+    MerklePatriciaTrie merklePatriciaTrie = MerklePatriciaTrieFixture.createMerklePatriciaTree(5);
+    Assertions.assertEquals(merklePatriciaTrie.size(), 5); // fixture sanity check.
 
     Entity entity = new EntityFixture();
-    AuthenticatedEntity authenticatedEntity = merkleTree.put(entity);
+    AuthenticatedEntity authenticatedEntity = merklePatriciaTrie.put(entity);
     MembershipProof proof = authenticatedEntity.getMembershipProof();
     MerklePath merklePath = proof.getMerklePath();
     ArrayList<Sha3256Hash> path = merklePath.getPath();
@@ -258,9 +262,9 @@ public class MerkleTreeTest {
     ArrayList<Sha3256Hash> newPath = Sha3256HashFixture.newSha3256HashArrayList(path.size());
     MerklePath manipulatedMerklePath = new MerklePath(newPath, isLeft);
     AuthenticatedEntity tamperedEntity = new MerkleTreeAuthenticatedEntity(
-        new MerkleProof(proof.getRoot(), manipulatedMerklePath),
-        authenticatedEntity.type(),
-        authenticatedEntity.getEntity());
+            new MerkleProof(proof.getRoot(), manipulatedMerklePath),
+            authenticatedEntity.type(),
+            authenticatedEntity.getEntity());
 
     MerkleTreeAuthenticatedEntityVerifier verifier = new MerkleTreeAuthenticatedEntityVerifier();
     Assertions.assertTrue(verifier.verify(authenticatedEntity)); // original authenticated entity passes verification.

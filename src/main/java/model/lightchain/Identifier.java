@@ -56,6 +56,26 @@ public class Identifier implements Serializable {
   }
 
   /**
+   * Converts a bit string to an identifier.
+   *
+   * @param bitString a bit string of length 256.
+   * @return an identifier.
+   */
+  public static Identifier bitStringToIdentifier(String bitString) {
+    if (bitString.length() != 8 * Size) {
+      throw new IllegalArgumentException("Bit string must be 256 bits long");
+    }
+
+    byte[] bytes = new byte[Size];
+    for (int i = 0; i < Size; i++) {
+      String byteString = bitString.substring(i * 8, (i + 1) * 8);
+      bytes[i] = (byte) Integer.parseInt(byteString, 2);
+    }
+
+    return new Identifier(bytes);
+  }
+
+  /**
    * Returns if objects equal.
    *
    * @param o an identifier object.
@@ -92,6 +112,19 @@ public class Identifier implements Serializable {
   }
 
   /**
+   * Returns the bit representation of the identifier.
+   *
+   * @return the bit representation of the identifier as a string.
+   */
+  public String getBitString() {
+    StringBuilder bits = new StringBuilder();
+    for (byte b : this.value) {
+      bits.append(String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0'));
+    }
+    return bits.toString();
+  }
+
+  /**
    * Returns string representation of identifier in Base58BTC.
    *
    * @return string representation of identifier in Base58BTC.
@@ -104,8 +137,7 @@ public class Identifier implements Serializable {
    * Compares this identifier with the other identifier.
    *
    * @param other represents other identifier to compared to.
-   * @return 0 if two identifiers are equal, 1 if this identifier is greater than other,
-   *     -1 if other identifier is greater than this.
+   * @return 0 if two identifiers are equal, 1 if this identifier is greater than other, -1 if other identifier is greater than this.
    */
   public int comparedTo(Identifier other) {
     int result = Arrays.compare(this.value, other.value);

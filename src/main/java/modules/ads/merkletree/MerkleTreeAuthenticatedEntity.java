@@ -19,23 +19,38 @@ public class MerkleTreeAuthenticatedEntity extends modules.ads.AuthenticatedEnti
    * @param e     the entity
    */
   public MerkleTreeAuthenticatedEntity(MerkleProof proof, String type, Entity e) {
-    this.membershipProof = new MerkleProof(proof.getPath(), proof.getRoot(), proof.getIsLeftNode());
+    this.membershipProof = new MerkleProof(proof.getRoot(), proof.getMerklePath());
     this.type = type;
     this.entity = e;
   }
 
+  /**
+   * Gets the type of the entity.
+   *
+   * @return the type of the entity
+   */
   @Override
   public String type() {
     return type;
   }
 
+  /**
+   * Gets the entity.
+   *
+   * @return the entity
+   */
   @Override
   public Entity getEntity() {
     return entity;
   }
 
+  /**
+   * Gets the membership proof.
+   *
+   * @return the membership proof
+   */
   @Override
   public MembershipProof getMembershipProof() {
-    return new MerkleProof(membershipProof.getPath(), membershipProof.getRoot(), membershipProof.getIsLeftNode());
+    return new MerkleProof(membershipProof.getRoot(), membershipProof.getMerklePath());
   }
 }

@@ -1,6 +1,7 @@
 package model.lightchain;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -9,7 +10,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.ipfs.multibase.Multibase;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import unittest.fixtures.BitFixture;
+import unittest.fixtures.IdentifierFixture;
 
 class IdentifierTest {
   private static final Random random = new Random();
@@ -142,7 +146,7 @@ class IdentifierTest {
    * input string.
    */
   @Test
-  void testRoundTrip() {
+  void testByteStringRoundTrip() {
     // creates a random identifier with a random byte array.
     byte[] value = new byte[Identifier.Size];
     random.nextBytes(value);
@@ -154,5 +158,55 @@ class IdentifierTest {
     assertEquals(identifier, identifier2);
     // the string representation of the two identifiers should be the same regardless of the way they are created.
     assertEquals(identifier.toString(), identifier2.toString());
+  }
+
+  /**
+   * Tests the round trip of Identifier. The method should return an Identifier with the same bit string representation as
+   * the input bit string.
+   */
+  @Test
+  void testBitStringRoundTrip() {
+    byte[] value = new byte[Identifier.Size];
+    random.nextBytes(value);
+    Identifier identifier = new Identifier(value);
+
+    String bitString = identifier.getBitString();
+    Identifier bitIdentifier = Identifier.bitStringToIdentifier(bitString);
+
+    assertEquals(bitIdentifier.getBitString(), bitString);
+    assertEquals(bitIdentifier.getBitString(), identifier.getBitString());
+    assertArrayEquals(bitIdentifier.getBytes(), identifier.getBytes());
+    assertEquals(bitIdentifier.comparedTo(identifier), 0);
+  }
+
+  /**
+   * Tests that unique bit strings are converted to unique identifiers.
+   */
+  @Test
+  void testRandomBitStrings() {
+    HashSet<String> bitStrings = new HashSet<>();
+    HashSet<Identifier> identifiers = new HashSet<>();
+
+    for (int i = 0; i < 1_000_000; i++) {
+      String bitString = BitFixture.newBitString(Identifier.Size * 8);
+      Assertions.assertFalse(bitStrings.contains(bitString));
+      bitStrings.add(bitString);
+      Identifier identifier = Identifier.bitStringToIdentifier(bitString);
+      Assertions.assertFalse(identifiers.contains(identifier));
+      identifiers.add(identifier);
+    }
+  }
+
+  /**
+   * Tests that the bit string representation of an identifier is correct, i.e., it is a string of 0s and 1s with length 256 bits.
+   */
+  @Test
+  void testBitStringCorrectness() {
+    Identifier identifier = IdentifierFixture.newIdentifier();
+    String bitString = identifier.getBitString();
+    Assertions.assertEquals(bitString.length(), Identifier.Size * 8);
+    for (int i = 0; i < bitString.length(); i++) {
+      Assertions.assertTrue(bitString.charAt(i) == '0' || bitString.charAt(i) == '1');
+    }
   }
 }

@@ -1,8 +1,7 @@
 package modules.ads;
 
-import java.util.ArrayList;
-
 import model.crypto.Sha3256Hash;
+import modules.ads.merkletree.MerklePath;
 
 /**
  * Represents a Merkle Proof of membership against a certain root identifier.
@@ -16,11 +15,9 @@ public interface MembershipProof {
   Sha3256Hash getRoot();
 
   /**
-   * Returns the path of the proof of membership.
+   * Returns the merkle path of the proof of membership.
    *
-   * @return path of the proof of membership.
+   * @return merkle path of the proof of membership.
    */
-  ArrayList<Sha3256Hash> getPath();
-
-  ArrayList<Boolean> getIsLeftNode();
+  MerklePath getMerklePath();
 }
